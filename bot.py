@@ -4,7 +4,7 @@ from discord import app_commands
 from discord.ext import tasks
 from flask import Flask
 from threading import Thread
-import random
+import random # Thêm thư viện này để lấy số ngẫu nhiên
 
 # --- GIỮ ONLINE 24/7 ---
 app = Flask('')
@@ -30,6 +30,7 @@ class LuciferoBot(discord.Client):
         self.target_emoji = None
 
     async def setup_hook(self):
+        # Đồng bộ lệnh với Discord
         await self.tree.sync()
         print("Lucifero: Đã đồng bộ các lệnh Slash!")
 
@@ -50,10 +51,9 @@ class LuciferoBot(discord.Client):
 
 bot = LuciferoBot()
 
-# --- CÁC LỆNH SLASH ---
+# --- CÁC LỆNH SLASH CHO ADMIN ---
 
-# 1. Lệnh bắt đầu gửi emoji (Admin)
-@bot.tree.command(name="set_auto", description="Cài đặt gửi emoji tự động mỗi 5 phút (Admin)")
+@bot.tree.command(name="set_auto", description="Cài đặt gửi emoji tự động (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
 async def set_auto(interaction: discord.Interaction, channel_id: str, emoji: str):
     try:
@@ -65,7 +65,6 @@ async def set_auto(interaction: discord.Interaction, channel_id: str, emoji: str
     except:
         await interaction.response.send_message("❌ Kiểm tra lại ID kênh.")
 
-# 2. Lệnh DỪNG gửi emoji (Admin)
 @bot.tree.command(name="stop_auto", description="Dừng gửi emoji tự động (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
 async def stop_auto(interaction: discord.Interaction):
@@ -73,38 +72,28 @@ async def stop_auto(interaction: discord.Interaction):
     bot.target_emoji = None
     if bot.send_emoji_task.is_running():
         bot.send_emoji_task.stop()
-    await interaction.response.send_message("🔴 **Lucifero**: Đã dừng hoàn toàn việc gửi emoji tự động.")
+    await interaction.response.send_message("🔴 **Lucifero**: Đã dừng việc gửi emoji tự động.")
 
-# 3. Lệnh ĐÁNH GIÁ ĐỘ ĐẸP TRAI (Mọi người đều dùng được)
-@bot.tree.command(name="handsomerate", description="Lucifero ngẫu nhiên đánh giá độ đẹp trai từ 1 tới 10")
-async def danhgia(interaction: discord.Interaction):
+# --- LỆNH MỚI: HANDSOMERATE (MỌI NGƯỜI ĐỀU DÙNG ĐƯỢC) ---
+@bot.tree.command(name="handsomerate", description="Lucifero chấm điểm đẹp trai của bạn")
+async def handsomerate(interaction: discord.Interaction):
+    # Lấy số ngẫu nhiên từ 1 đến 10
     score = random.randint(1, 10)
     
-    # Xác định lời phán dựa trên điểm số
+    # Thiết lập lời phán
     if score >= 9:
-        comment = "Cực phẩm! Vẻ đẹp này khiến ta cũng phải kinh ngạc. ✨"
-        color = 0xFFD700 # Vàng
-    elif score >= 7:
-        comment = "Khá khen cho nhan sắc này, rất có khí chất! 😎"
-        color = 0x2ECC71 # Xanh lá
+        msg = "Cực phẩm! Vẻ đẹp này khiến ta cũng phải kinh ngạc. ✨"
     elif score >= 5:
-        comment = "Tạm ổn, đủ để ta không thấy khó chịu khi nhìn vào. 👍"
-        color = 0x3498DB # Xanh dương
+        msg = "Tạm ổn, đủ để ta không thấy khó chịu khi nhìn vào. 👍"
     else:
-        comment = "Xấu vl cân nhắc phẩu thuật thẫm mĩ đi cu... 💀"
-        color = 0xE74C3C # Đỏ
+        msg = "Ngươi nên dùng phép thuật để che mặt đi thì hơn... 💀"
 
-    embed = discord.Embed(
-        title="⚔️ Phán Quyết Của Lucifero",
-        description=f"Nhan sắc của {interaction.user.mention} được chấm là:",
-        color=color
+    # Gửi phản hồi
+    await interaction.response.send_message(
+        f"⚔️ **Lucifero** phán quyết nhan sắc của {interaction.user.mention}:\n"
+        f"> **Điểm số:** {score}/10\n"
+        f"> **Lời phán:** {msg}"
     )
-    embed.add_field(name="Điểm số", value=f"**{score}/10**", inline=True)
-    embed.add_field(name="Lời phán", value=f"*{comment}*", inline=False)
-    embed.set_thumbnail(url=interaction.user.display_avatar.url)
-    embed.set_footer(text="Lucifero Beauty Rating System")
-
-    await interaction.response.send_message(embed=embed)
 
 # Xử lý lỗi quyền Admin
 @set_auto.error
@@ -115,4 +104,9 @@ async def admin_error(interaction: discord.Interaction, error: app_commands.AppC
 
 if __name__ == "__main__":
     keep_alive()
-    bot.run(os.getenv('TOKEN'))
+    # Hãy đảm bảo bạn đã đặt TOKEN trong Secrets/Environment Variables
+    token = os.getenv('TOKEN')
+    if token:
+        bot.run(token)
+    else:
+        print("Lỗi: Không tìm thấy TOKEN trong môi trường!")
