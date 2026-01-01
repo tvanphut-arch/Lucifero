@@ -4,9 +4,11 @@ from discord import app_commands
 from discord.ext import tasks
 from flask import Flask
 from threading import Thread
+import random
 
 # --- GIỮ ONLINE 24/7 ---
 app = Flask('')
+
 @app.route('/')
 def home():
     return "Lucifero Bot is Live!"
@@ -43,13 +45,14 @@ class LuciferoBot(discord.Client):
             if channel:
                 try:
                     await channel.send(self.target_emoji)
-                except: pass
+                except:
+                    pass
 
 bot = LuciferoBot()
 
-# --- CÁC LỆNH SLASH CHO ADMIN ---
+# --- CÁC LỆNH SLASH ---
 
-# 1. Lệnh bắt đầu gửi emoji
+# 1. Lệnh bắt đầu gửi emoji (Admin)
 @bot.tree.command(name="set_auto", description="Cài đặt gửi emoji tự động mỗi 5 phút (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
 async def set_auto(interaction: discord.Interaction, channel_id: str, emoji: str):
@@ -62,17 +65,48 @@ async def set_auto(interaction: discord.Interaction, channel_id: str, emoji: str
     except:
         await interaction.response.send_message("❌ Kiểm tra lại ID kênh.")
 
-# 2. Lệnh DỪNG gửi emoji (MỚI THÊM)
+# 2. Lệnh DỪNG gửi emoji (Admin)
 @bot.tree.command(name="stop_auto", description="Dừng gửi emoji tự động (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
 async def stop_auto(interaction: discord.Interaction):
     bot.target_channel_id = None
     bot.target_emoji = None
     if bot.send_emoji_task.is_running():
-        bot.send_emoji_task.stop() # Dừng vòng lặp
-    await interaction.response.send_message("🛑 **Lucifero**: Đã dừng hoàn toàn việc gửi emoji tự động.")
+        bot.send_emoji_task.stop()
+    await interaction.response.send_message("🔴 **Lucifero**: Đã dừng hoàn toàn việc gửi emoji tự động.")
 
-# Xử lý lỗi quyền Admin cho cả 2 lệnh
+# 3. Lệnh ĐÁNH GIÁ ĐỘ ĐẸP TRAI (Mọi người đều dùng được)
+@bot.tree.command(name="danhgia", description="Lucifero ngẫu nhiên đánh giá độ đẹp trai từ 1 tới 10")
+async def danhgia(interaction: discord.Interaction):
+    score = random.randint(1, 10)
+    
+    # Xác định lời phán dựa trên điểm số
+    if score >= 9:
+        comment = "Cực phẩm! Vẻ đẹp này khiến ta cũng phải kinh ngạc. ✨"
+        color = 0xFFD700 # Vàng
+    elif score >= 7:
+        comment = "Khá khen cho nhan sắc này, rất có khí chất! 😎"
+        color = 0x2ECC71 # Xanh lá
+    elif score >= 5:
+        comment = "Tạm ổn, đủ để ta không thấy khó chịu khi nhìn vào. 👍"
+        color = 0x3498DB # Xanh dương
+    else:
+        comment = "Xấu vl cân nhắc phẩu thuật thẫm mĩ đi cu... 💀"
+        color = 0xE74C3C # Đỏ
+
+    embed = discord.Embed(
+        title="⚔️ Phán Quyết Của Lucifero",
+        description=f"Nhan sắc của {interaction.user.mention} được chấm là:",
+        color=color
+    )
+    embed.add_field(name="Điểm số", value=f"**{score}/10**", inline=True)
+    embed.add_field(name="Lời phán", value=f"*{comment}*", inline=False)
+    embed.set_thumbnail(url=interaction.user.display_avatar.url)
+    embed.set_footer(text="Lucifero Beauty Rating System")
+
+    await interaction.response.send_message(embed=embed)
+
+# Xử lý lỗi quyền Admin
 @set_auto.error
 @stop_auto.error
 async def admin_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
