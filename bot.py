@@ -4,9 +4,9 @@ from discord import app_commands
 from discord.ext import tasks
 from flask import Flask
 from threading import Thread
-import random # Cần thiết để lấy số ngẫu nhiên
+import random
 
-# --- GIỮ ONLINE 24/7 ---
+# --- GIỮ ONLINE 24/7 (Cấu hình cho Render) ---
 app = Flask('')
 
 @app.route('/')
@@ -25,12 +25,13 @@ class LuciferoBot(discord.Client):
     def __init__(self):
         intents = discord.Intents.default()
         super().__init__(intents=intents)
+        # Tree dùng để quản lý lệnh Slash
         self.tree = app_commands.CommandTree(self)
         self.target_channel_id = None
         self.target_emoji = None
 
     async def setup_hook(self):
-        # Đồng bộ lệnh với Discord
+        # Đồng bộ lệnh với Discord hệ thống
         await self.tree.sync()
         print("Lucifero: Đã đồng bộ các lệnh Slash!")
 
@@ -39,6 +40,7 @@ class LuciferoBot(discord.Client):
         if not self.send_emoji_task.is_running():
             self.send_emoji_task.start()
 
+    # Vòng lặp gửi emoji tự động mỗi 5 phút
     @tasks.loop(minutes=5)
     async def send_emoji_task(self):
         if self.target_channel_id and self.target_emoji:
@@ -51,24 +53,26 @@ class LuciferoBot(discord.Client):
 
 bot = LuciferoBot()
 
-# --- LỆNH SLASH ĐẸP TRAI (CHO MEMBER) ---
-@bot.tree.command(name="handsomerate", description="Lucifero chấm điểm đẹp trai ngẫu nhiên 1-10")
+# --- CÁC LỆNH SLASH ---
+
+# 1. Lệnh /handsomerate - Dành cho mọi Member (Sửa lỗi phản hồi)
+@bot.tree.command(name="handsomerate", description="Lucifero ngẫu nhiên đánh giá độ đẹp trai từ 1 tới 10")
 async def handsomerate(interaction: discord.Interaction):
     score = random.randint(1, 10)
     
-    # Lời phán dựa trên điểm
+    # Xác định lời phán và màu sắc dựa trên điểm số
     if score >= 9:
         comment = "Cực phẩm! Vẻ đẹp này khiến ta cũng phải kinh ngạc. ✨"
-        color = 0xFFD700 # Vàng
+        color = 0xFFD700  # Vàng
     elif score >= 7:
         comment = "Khá khen cho nhan sắc này, rất có khí chất! 😎"
-        color = 0x2ECC71 # Xanh lá
+        color = 0x2ECC71  # Xanh lá
     elif score >= 5:
-        comment = "Tầm thường, nhưng vẫn đủ để tồn tại ở thế giới này. 👍"
-        color = 0x3498DB # Xanh dương
+        comment = "Tạm ổn, đủ để ta không thấy khó chịu khi nhìn vào. 👍"
+        color = 0x3498DB  # Xanh dương
     else:
         comment = "Ngươi nên dùng phép thuật để che mặt đi thì hơn... 💀"
-        color = 0xE74C3C # Đỏ
+        color = 0xE74C3C  # Đỏ
 
     embed = discord.Embed(
         title="⚔️ Phán Quyết Của Lucifero",
@@ -78,11 +82,12 @@ async def handsomerate(interaction: discord.Interaction):
     embed.add_field(name="Điểm số", value=f"**{score}/10**", inline=True)
     embed.add_field(name="Lời phán", value=f"*{comment}*", inline=False)
     embed.set_thumbnail(url=interaction.user.display_avatar.url)
-    
+    embed.set_footer(text="Lucifero Beauty Rating System")
+
     await interaction.response.send_message(embed=embed)
 
-# --- LỆNH SLASH CHO ADMIN ---
-@bot.tree.command(name="✅", description="Cài đặt gửi emoji tự động (Admin)")
+# 2. Lệnh /set_auto - Dành cho Admin (Sửa lỗi đặt tên ✅ thành chữ thường)
+@bot.tree.command(name="set_auto", description="Cài đặt gửi emoji tự động (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
 async def set_auto(interaction: discord.Interaction, channel_id: str, emoji: str):
     try:
@@ -94,7 +99,8 @@ async def set_auto(interaction: discord.Interaction, channel_id: str, emoji: str
     except:
         await interaction.response.send_message("❌ Kiểm tra lại ID kênh.")
 
-@bot.tree.command(name="❌", description="Dừng gửi emoji tự động (Admin)")
+# 3. Lệnh /stop_auto - Dành cho Admin (Sửa lỗi đặt tên ❌ thành chữ thường)
+@bot.tree.command(name="stop_auto", description="Dừng gửi emoji tự động (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
 async def stop_auto(interaction: discord.Interaction):
     bot.target_channel_id = None
@@ -103,7 +109,7 @@ async def stop_auto(interaction: discord.Interaction):
         bot.send_emoji_task.stop()
     await interaction.response.send_message("🔴 **Lucifero**: Đã dừng hoàn toàn việc gửi emoji tự động.")
 
-# Xử lý lỗi quyền
+# Xử lý lỗi khi người dùng không có quyền Admin
 @bot.tree.error
 async def on_app_command_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
     if isinstance(error, app_commands.MissingPermissions):
@@ -111,4 +117,9 @@ async def on_app_command_error(interaction: discord.Interaction, error: app_comm
 
 if __name__ == "__main__":
     keep_alive()
-    bot.run(os.getenv('TOKEN'))
+    # Lấy TOKEN từ môi trường Render
+    token = os.getenv('TOKEN')
+    if token:
+        bot.run(token)
+    else:
+        print("Lỗi: Không tìm thấy TOKEN!")
