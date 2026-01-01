@@ -76,7 +76,7 @@ async def stop_auto(interaction: discord.Interaction):
     await interaction.response.send_message("🔴 **Lucifero**: Đã dừng hoàn toàn việc gửi emoji tự động.")
 
 # 3. Lệnh ĐÁNH GIÁ ĐỘ ĐẸP TRAI (Mọi người đều dùng được)
-@bot.tree.command(name="danhgia", description="Lucifero ngẫu nhiên đánh giá độ đẹp trai từ 1 tới 10")
+@bot.tree.command(name="handsomerate", description="Lucifero ngẫu nhiên đánh giá độ đẹp trai từ 1 tới 10")
 async def danhgia(interaction: discord.Interaction):
     score = random.randint(1, 10)
     
