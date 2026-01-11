@@ -63,8 +63,8 @@ async def handsomerate(interaction: discord.Interaction):
     # Xác định lời phán dựa trên thang điểm 100
     if score > 100:
         comment, color = "⚠️ LỖI HỆ THỐNG: Vẻ đẹp vượt qua mọi giới hạn của quỷ dữ! 👑", 0xFFFFFF # Trắng sáng
-    elif score >= 90:
-        comment, color = "Real chad. ✨", 0xFFD700 # Vàng Gold
+    elif score >= 95:
+        comment, color = "Ta thấy đây không còn là đẹp nữa mà là áp đảo nhan sắc. Đứng cạnh người khác là tự động kéo spotlight về mình, không cần làm gì vẫn nổi bật. Mức 100/100 không phải ưu ái mà là mức tối thiểu cho nhan sắc này. ✨", 0xFFD700 # Vàng Gold
     elif score >= 70:
         comment, color = "Cực phẩm! Khí chất ngời ngời, vạn người mê. 😎", 0x2ECC71 # Xanh lá
     elif score >= 50:
