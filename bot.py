@@ -30,7 +30,6 @@ class LuciferoBot(discord.Client):
         self.target_emoji = None
 
     async def setup_hook(self):
-        # Đồng bộ lệnh Slash ngay khi khởi động để tránh lỗi không phản hồi
         await self.tree.sync()
         print("✅ Lucifero: Đã đồng bộ lệnh Slash thành công!")
 
@@ -51,20 +50,20 @@ class LuciferoBot(discord.Client):
 
 bot = LuciferoBot()
 
-# --- 3. LỆNH SLASH ĐẸP TRAI (Thang điểm 1-100) ---
+# --- 3. LỆNH SLASH ĐẸP TRAI (Thang điểm 1-100, Tỉ lệ 101 là 1%) ---
 @bot.tree.command(name="handsomerate", description="Lucifero chấm điểm đẹp trai ngẫu nhiên 1-100")
 async def handsomerate(interaction: discord.Interaction):
-    # Tỉ lệ 1% nhận được điểm 101 (Vượt khung)
+    # random.random() trả về từ 0.0 đến 1.0. Bé hơn 0.01 nghĩa là tỉ lệ 1%
     if random.random() < 0.01:
         score = 101
     else:
         score = random.randint(1, 100)
     
-    # Xác định lời phán dựa trên thang điểm 100
+    # Xác định lời phán và màu sắc (Màu Hồng cho mức Max)
     if score > 100:
-        comment, color = "⚠️ LỖI HỆ THỐNG: Vẻ đẹp vượt qua mọi giới hạn của quỷ dữ! 👑", 0xFFFFFF # Trắng sáng
+        comment, color = "⚠️ LỖI HỆ THỐNG: Vẻ đẹp vượt qua mọi giới hạn của quỷ dữ! 👑 ✨", 0xFF69B4 # Màu Hồng (Hot Pink)
     elif score >= 95:
-        comment, color = "Ta thấy đây không còn là đẹp nữa mà là áp đảo nhan sắc. Đứng cạnh người khác là tự động kéo spotlight về mình, không cần làm gì vẫn nổi bật. Mức 100/100 không phải ưu ái mà là mức tối thiểu cho nhan sắc này. ✨", 0xFFD700 # Vàng Gold
+        comment, color = "Ta thấy đây không còn là đẹp nữa mà là áp đảo nhan sắc. Đứng cạnh người khác là tự động kéo spotlight về mình. ✨", 0xFF69B4 # Màu Hồng (Hot Pink)
     elif score >= 70:
         comment, color = "Cực phẩm! Khí chất ngời ngời, vạn người mê. 😎", 0x2ECC71 # Xanh lá
     elif score >= 50:
@@ -82,16 +81,14 @@ async def handsomerate(interaction: discord.Interaction):
     embed.add_field(name="Hệ số nhan sắc", value=f"**{score}/100**", inline=True)
     embed.add_field(name="Lời phán", value=f"*{comment}*", inline=False)
     
-    # Hiển thị ảnh đại diện người dùng để tăng tính tương tác
     if interaction.user.display_avatar:
         embed.set_thumbnail(url=interaction.user.display_avatar.url)
 
     embed.set_footer(text="Lucifero Beauty Rating System • 2026")
 
-    # Phản hồi lệnh Slash
     await interaction.response.send_message(embed=embed)
 
-# --- 4. LỆNH ADMIN (set_auto/stop_auto) ---
+# --- 4. LỆNH ADMIN ---
 @bot.tree.command(name="set_auto", description="Bật gửi emoji tự động (Admin)")
 @app_commands.checks.has_permissions(administrator=True)
 async def set_auto(interaction: discord.Interaction, channel_id: str, emoji: str):
